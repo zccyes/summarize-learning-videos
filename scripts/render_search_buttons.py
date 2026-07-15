@@ -36,31 +36,38 @@ def normalize_term(term: str) -> str:
     return normalized
 
 
+def search_terms(term: str) -> tuple[str, str]:
+    """Split a concept heading into Baidu-Chinese and Google-English queries."""
+    text = normalize_term(re.sub(r"^###\s+", "", term).replace("`", ""))
+    match = re.match(r"^(.*?)\s*[（(]\s*(.*?)\s*[）)]\s*$", text)
+    if not match:
+        return text, text
+
+    baidu_term = normalize_term(match.group(1))
+    google_term = normalize_term(match.group(2))
+    return baidu_term, google_term
+
+
 def render(term: str) -> str:
-    term = normalize_term(term)
-    baidu_url = "https://www.baidu.com/s?wd=" + quote(term, safe="")
-    google_url = "https://www.google.com/search?q=" + quote(term, safe="")
+    baidu_term, google_term = search_terms(term)
+    baidu_url = "https://www.baidu.com/s?wd=" + quote(baidu_term, safe="")
+    google_url = "https://www.google.com/search?q=" + quote(google_term, safe="")
     return (
         '<span class="slv-search-buttons">'
         + button(
             "百度",
             baidu_url,
             "https://www.baidu.com/favicon.ico",
-            term,
+            baidu_term,
         )
         + button(
             "Google",
             google_url,
             "https://www.google.com/favicon.ico",
-            term,
+            google_term,
         )
         + "</span>"
     )
-
-
-def heading_term(heading: str) -> str:
-    text = re.sub(r"^###\s+", "", heading).strip().replace("`", "")
-    return normalize_term(re.split(r"[（(]", text, maxsplit=1)[0])
 
 
 def rewrite_note(path: Path) -> int:
@@ -82,7 +89,7 @@ def rewrite_note(path: Path) -> int:
         nonlocal replacements
         replacements += 1
         heading = button_match.group(1)
-        return f"{heading}\n\n{render(heading_term(heading))}"
+        return f"{heading}\n\n{render(heading)}"
 
     rewritten = pattern.sub(replace, section)
     headings = len(re.findall(r"(?m)^###\s+.+$", section))

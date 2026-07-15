@@ -57,17 +57,17 @@ class WorkflowTests(unittest.TestCase):
         result = run_script(
             "render_search_buttons.py",
             "--term",
-            "HBM4",
+            "沉没成本（Sunk Cost）",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         markup = result.stdout.strip()
         self.assertIn("https://www.baidu.com/favicon.ico", markup)
         self.assertIn("https://www.google.com/favicon.ico", markup)
         hrefs = re.findall(r'href="([^"]+)"', markup)
-        self.assertEqual(parse_qs(urlparse(hrefs[0]).query)["wd"], ["HBM4"])
-        self.assertEqual(parse_qs(urlparse(hrefs[1]).query)["q"], ["HBM4"])
-        self.assertIn('title="百度搜索：HBM4"', markup)
-        self.assertIn('aria-label="Google搜索：HBM4"', markup)
+        self.assertEqual(parse_qs(urlparse(hrefs[0]).query)["wd"], ["沉没成本"])
+        self.assertEqual(parse_qs(urlparse(hrefs[1]).query)["q"], ["Sunk Cost"])
+        self.assertIn('title="百度搜索：沉没成本"', markup)
+        self.assertIn('aria-label="Google搜索：Sunk Cost"', markup)
         self.assertNotIn(">百度搜索<", markup)
         self.assertNotIn(">Google搜索<", markup)
 
@@ -94,7 +94,7 @@ class WorkflowTests(unittest.TestCase):
             text = note.read_text(encoding="utf-8")
             hrefs = re.findall(r'href="([^"]+)"', text)
             self.assertEqual(parse_qs(urlparse(hrefs[0]).query)["wd"], ["沉没成本"])
-            self.assertEqual(parse_qs(urlparse(hrefs[1]).query)["q"], ["沉没成本"])
+            self.assertEqual(parse_qs(urlparse(hrefs[1]).query)["q"], ["Sunk Cost"])
             self.assertIn("## 下一节", text)
 
     def test_normalize_vtt_deduplicates_progressive_captions(self) -> None:
@@ -177,7 +177,7 @@ class WorkflowTests(unittest.TestCase):
             buttons = run_script(
                 "render_search_buttons.py",
                 "--term",
-                "测试概念",
+                "测试概念（Test concept）",
             )
             self.assertEqual(buttons.returncode, 0, buttons.stderr)
             properties = "\n".join(
@@ -296,6 +296,27 @@ class WorkflowTests(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Baidu queries must exactly equal", result.stdout)
+
+            note.write_text(body, encoding="utf-8")
+            text = note.read_text(encoding="utf-8")
+            note.write_text(
+                text.replace(
+                    "Test%20concept",
+                    "Test%20concept%20extra",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            result = run_script(
+                "validate_note.py",
+                str(note),
+                "--duration-seconds",
+                "600",
+                "--expected-chapters",
+                "1",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Google queries must exactly equal", result.stdout)
 
 
 if __name__ == "__main__":

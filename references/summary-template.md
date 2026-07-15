@@ -115,10 +115,10 @@ Treat these as completeness guides, not quotas. Remove repetition while preservi
 Give each concept one heading and one button row. Generate the row with:
 
 ```bash
-scripts/render_search_buttons.py --term "HBM4"
+scripts/render_search_buttons.py --term "沉没成本（Sunk Cost）"
 ```
 
-The generated HTML must display only the Baidu and Google logos. Do not add visible provider names or raw URLs. Keep the `title` and `aria-label` attributes for hover help and accessibility. Both providers must search the exact visible concept name before any parenthetical translation. Never append definitions, related topics, disambiguating words, translations, or other explanatory keywords. For example, the heading `沉没成本（Sunk Cost）` must search only `沉没成本` in both providers.
+The generated HTML must display only the Baidu and Google logos. Do not add visible provider names or raw URLs. Keep the `title` and `aria-label` attributes for hover help and accessibility. Format translatable headings as `中文概念（English term）`: Baidu must search exactly the Chinese concept before the parentheses, while Google must search exactly the English term inside the parentheses. Never append definitions, related topics, disambiguating words, or other explanatory keywords. For example, `沉没成本（Sunk Cost）` must search `沉没成本` on Baidu and `Sunk Cost` on Google. If a proper noun or abbreviation has no meaningful bilingual split and therefore no parenthetical English term, both providers may search the unchanged heading.
 
 To repair buttons in an existing note after upgrading the skill, run:
 

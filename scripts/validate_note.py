@@ -45,9 +45,13 @@ def minimum_chars(duration_seconds: int | None) -> int:
     return 6000
 
 
-def concept_name(heading: str) -> str:
+def concept_search_terms(heading: str) -> tuple[str, str]:
     text = re.sub(r"^###\s+", "", heading).strip().replace("`", "")
-    return " ".join(re.split(r"[（(]", text, maxsplit=1)[0].split())
+    normalized = " ".join(text.split())
+    match = re.match(r"^(.*?)\s*[（(]\s*(.*?)\s*[）)]\s*$", normalized)
+    if not match:
+        return normalized, normalized
+    return " ".join(match.group(1).split()), " ".join(match.group(2).split())
 
 
 def main() -> int:
@@ -139,18 +143,20 @@ def main() -> int:
             f"Core concepts have {concept_count} headings but not exactly one Google logo button each"
         )
 
-    expected_queries = [concept_name(heading) for heading in concept_headings]
+    expected_pairs = [concept_search_terms(heading) for heading in concept_headings]
+    expected_baidu = [pair[0] for pair in expected_pairs]
+    expected_google = [pair[1] for pair in expected_pairs]
     decoded_baidu = [unquote(html.unescape(query)) for query in baidu_links]
     decoded_google = [unquote(html.unescape(query)) for query in google_links]
-    if len(decoded_baidu) == concept_count and decoded_baidu != expected_queries:
+    if len(decoded_baidu) == concept_count and decoded_baidu != expected_baidu:
         errors.append(
-            "Baidu queries must exactly equal their visible concept names; "
-            "do not append explanatory keywords"
+            "Baidu queries must exactly equal the Chinese concept names before parentheses; "
+            "do not append explanatory or English keywords"
         )
-    if len(decoded_google) == concept_count and decoded_google != expected_queries:
+    if len(decoded_google) == concept_count and decoded_google != expected_google:
         errors.append(
-            "Google queries must exactly equal their visible concept names; "
-            "do not append explanatory or translated keywords"
+            "Google queries must exactly equal the English terms inside parentheses; "
+            "do not append explanatory or Chinese keywords"
         )
     if concept_section.count('title="百度搜索：') != concept_count:
         errors.append("Every Baidu button must include a hover title")
