@@ -21,9 +21,13 @@ REQUIRED_SECTIONS = (
     "## 核心概念与术语",
     "## 作者的假设、限制与可能争议",
     "## 复习问题",
+    "## 知识图谱关键词",
     "## 提炼质量说明",
 )
-PLACEHOLDER = re.compile(r"TODO|待补充|待填写|<[^>\n]{1,80}>", re.IGNORECASE)
+PLACEHOLDER = re.compile(
+    r"TODO|待补充|待填写|<(?!/?(?:a|span|img)\b)[^>\n]{1,80}>",
+    re.IGNORECASE,
+)
 
 
 def minimum_chars(duration_seconds: int | None) -> int:
@@ -91,6 +95,56 @@ def main() -> int:
     if review_questions < 5:
         errors.append(f"Only {review_questions} review questions; expected at least 5")
 
+    concept_section = body.split("## 核心概念与术语", 1)[-1].split("\n## ", 1)[0]
+    concept_headings = re.findall(r"(?m)^###\s+.+$", concept_section)
+    concept_count = len(concept_headings)
+    if concept_count == 0:
+        errors.append("Core concepts must use one plain-text level-three heading per concept")
+    if any("[[" in heading or "]]" in heading for heading in concept_headings):
+        errors.append("Core-concept headings must not use unresolved wikilinks")
+
+    baidu_links = re.findall(
+        r'href="https://www\.baidu\.com/s\?wd=([^"\s]+)"', concept_section
+    )
+    google_links = re.findall(
+        r'href="https://www\.google\.com/search\?q=([^"\s]+)"', concept_section
+    )
+    baidu_icons = concept_section.count('src="https://www.baidu.com/favicon.ico"')
+    google_icons = concept_section.count('src="https://www.google.com/favicon.ico"')
+    if len(baidu_links) != concept_count or baidu_icons != concept_count:
+        errors.append(
+            f"Core concepts have {concept_count} headings but not exactly one Baidu logo button each"
+        )
+    if len(google_links) != concept_count or google_icons != concept_count:
+        errors.append(
+            f"Core concepts have {concept_count} headings but not exactly one Google logo button each"
+        )
+    if concept_section.count('title="百度搜索：') != concept_count:
+        errors.append("Every Baidu button must include a hover title")
+    if concept_section.count('title="Google搜索：') != concept_count:
+        errors.append("Every Google button must include a hover title")
+    if concept_section.count('aria-label="百度搜索：') != concept_count:
+        errors.append("Every Baidu button must include an accessibility label")
+    if concept_section.count('aria-label="Google搜索：') != concept_count:
+        errors.append("Every Google button must include an accessibility label")
+
+    button_contents = re.findall(
+        r'(?s)<a\b[^>]*href="https://www\.(?:baidu|google)\.com/[^>]*>(.*?)</a>',
+        concept_section,
+    )
+    for content in button_contents:
+        visible_text = re.sub(r"<[^>]+>", "", content).strip()
+        if visible_text:
+            errors.append("Search buttons must be logo-only with no visible provider text")
+            break
+
+    keyword_section = body.split("## 知识图谱关键词", 1)[-1].split("\n## ", 1)[0]
+    graph_tags = re.findall(r"(?<!#)#(?!#)([^\s#]+)", keyword_section)
+    if len(set(graph_tags)) < 3:
+        errors.append("Knowledge-graph section must contain at least three normalized tags")
+    if "[[" in keyword_section or "]]" in keyword_section:
+        errors.append("Knowledge-graph keywords must use tags, not unresolved wikilinks")
+
     result = {
         "passed": not errors,
         "errors": errors,
@@ -100,6 +154,8 @@ def main() -> int:
             "timeline_rows": timeline_rows,
             "detailed_chapters": detailed_chapters,
             "review_questions": review_questions,
+            "core_concepts": concept_count,
+            "graph_keywords": len(set(graph_tags)),
         },
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))

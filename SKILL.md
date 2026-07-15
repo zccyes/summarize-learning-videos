@@ -65,6 +65,8 @@ For those videos:
 4. Separate the creator's claims from established facts and from the summarizer's inference.
 5. Preserve important original-language terms in parentheses.
 6. Make length proportional to information density, not merely runtime.
+7. Give each core concept its own plain-text heading. Immediately below it, add one logo-only Baidu search button and one logo-only Google search button by running `scripts/render_search_buttons.py`; never use an unresolved wikilink as the concept heading.
+8. End with a `知识图谱关键词` section containing normalized Obsidian tags. Reuse the same tag spelling across notes so shared topics form graph nodes.
 
 ## Pass the mandatory quality gate
 
@@ -103,7 +105,7 @@ Include a source-quality statement in every note.
 1. Save the main note in the configured target folder as `<clean video title>.md`.
 2. Do not overwrite an existing file without explicit permission. Use a disambiguating suffix when the video is different.
 3. Save a cleaned transcript only when configuration requests it; otherwise keep it temporary for analysis and remove it after validation.
-4. Use YAML properties, Obsidian `[[wikilinks]]`, tags without `#` in YAML, and relative attachment embeds.
+4. Use YAML properties, normalized tags, and relative attachment embeds. Use `[[wikilinks]]` only for notes that already resolve in the current vault; use graph keywords as tags rather than nonexistent note links.
 5. Use clickable timestamp links when the platform supports them.
 6. Update the configured index note after a successful save; create it on first use if absent.
 7. Delete temporary audio and video after successful output unless configuration says otherwise.

@@ -23,6 +23,7 @@ class RepositoryTests(unittest.TestCase):
             "references/video-type-guides.md",
             "scripts/doctor.py",
             "scripts/init_config.py",
+            "scripts/render_search_buttons.py",
             "scripts/setup_macos.sh",
             "scripts/run_pipeline.py",
             "scripts/validate_note.py",

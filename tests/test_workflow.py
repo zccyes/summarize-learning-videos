@@ -22,6 +22,27 @@ def run_script(name: str, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_render_search_buttons_are_logo_only_and_url_encoded(self) -> None:
+        result = run_script(
+            "render_search_buttons.py",
+            "--term",
+            "HBM4",
+            "--baidu-query",
+            "HBM4 高带宽内存",
+            "--google-query",
+            "HBM4 High Bandwidth Memory",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        markup = result.stdout.strip()
+        self.assertIn("https://www.baidu.com/favicon.ico", markup)
+        self.assertIn("https://www.google.com/favicon.ico", markup)
+        self.assertIn("HBM4%20%E9%AB%98%E5%B8%A6%E5%AE%BD%E5%86%85%E5%AD%98", markup)
+        self.assertIn("HBM4%20High%20Bandwidth%20Memory", markup)
+        self.assertIn('title="百度搜索：HBM4"', markup)
+        self.assertIn('aria-label="Google搜索：HBM4"', markup)
+        self.assertNotIn(">百度搜索<", markup)
+        self.assertNotIn(">Google搜索<", markup)
+
     def test_normalize_vtt_deduplicates_progressive_captions(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -99,6 +120,16 @@ class WorkflowTests(unittest.TestCase):
     def test_quality_validator_accepts_complete_note(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             note = Path(directory) / "note.md"
+            buttons = run_script(
+                "render_search_buttons.py",
+                "--term",
+                "测试概念",
+                "--baidu-query",
+                "测试概念 中文",
+                "--google-query",
+                "test concept",
+            )
+            self.assertEqual(buttons.returncode, 0, buttons.stderr)
             properties = "\n".join(
                 [
                     "type: video-note",
@@ -142,7 +173,11 @@ class WorkflowTests(unittest.TestCase):
 
 ## 核心概念与术语
 
-- 核心概念：定义和适用范围。
+### 测试概念（Test concept）
+
+{buttons.stdout.strip()}
+
+核心概念的定义和适用范围。
 
 ## 作者的假设、限制与可能争议
 
@@ -155,6 +190,10 @@ class WorkflowTests(unittest.TestCase):
 3. 使用了什么例子？
 4. 有哪些限制？
 5. 如何实际应用？
+
+## 知识图谱关键词
+
+#测试概念 #视频笔记 #结构验证
 
 ## 提炼质量说明
 
