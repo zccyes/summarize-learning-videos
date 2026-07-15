@@ -1,0 +1,176 @@
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
+
+
+def run_script(name: str, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(SCRIPTS / name), *args],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+class WorkflowTests(unittest.TestCase):
+    def test_normalize_vtt_deduplicates_progressive_captions(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "sample.vtt"
+            output = root / "transcript.md"
+            source.write_text(
+                "WEBVTT\n\n"
+                "00:00:01.000 --> 00:00:03.000\n第一句\n\n"
+                "00:00:02.000 --> 00:00:04.000\n第一句话完整了\n\n"
+                "00:00:05.000 --> 00:00:07.000\n第二句话\n",
+                encoding="utf-8",
+            )
+            result = run_script("normalize_transcript.py", str(source), str(output))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            text = output.read_text(encoding="utf-8")
+            self.assertIn("[00:00:01] 第一句话完整了", text)
+            self.assertIn("[00:00:05] 第二句话", text)
+            self.assertNotIn("[00:00:01] 第一句\n", text)
+
+    def test_chapterize_covers_all_manifest_chapters(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "manifest.json"
+            transcript = root / "transcript.md"
+            output = root / "chapterized.md"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "title": "示例视频",
+                        "duration_seconds": 120,
+                        "chapters": [
+                            {"title": "开场", "start_time": 0, "end_time": 60},
+                            {"title": "结论", "start_time": 60, "end_time": 120},
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            transcript.write_text(
+                "# 视频转写稿\n\n[00:00:10] 第一部分。\n\n[00:01:10] 第二部分。\n",
+                encoding="utf-8",
+            )
+            result = run_script(
+                "chapterize_transcript.py", str(manifest), str(transcript), str(output)
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            text = output.read_text(encoding="utf-8")
+            self.assertIn("开场", text)
+            self.assertIn("第一部分。", text)
+            self.assertIn("结论", text)
+            self.assertIn("第二部分。", text)
+
+    def test_init_config_uses_real_vault_and_stays_local(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            vault = root / "vault"
+            (vault / ".obsidian").mkdir(parents=True)
+            output = root / "project-config.yaml"
+            result = run_script(
+                "init_config.py",
+                "--vault",
+                str(vault),
+                "--target-folder",
+                "未分类",
+                "--output",
+                str(output),
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            text = output.read_text(encoding="utf-8")
+            self.assertIn(str(vault.resolve()), text)
+            self.assertIn('target_folder: "未分类"', text)
+            self.assertNotIn("/absolute/path/to/your", text)
+
+    def test_quality_validator_accepts_complete_note(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            note = Path(directory) / "note.md"
+            properties = "\n".join(
+                [
+                    "type: video-note",
+                    'title: "测试笔记"',
+                    "platform: test",
+                    "creator: test",
+                    "source: https://example.com/video",
+                    "video_id: test-1",
+                    "duration: 00:10:00",
+                    "transcript_source: manual-subtitles",
+                    "source_quality: high",
+                    "status: complete",
+                    "created: 2026-01-01",
+                    "tags: [video-note]",
+                ]
+            )
+            detailed_body = "这是经过完整核对的章节内容，包含论点、解释、例子和边界条件。" * 100
+            body = f"""---
+{properties}
+---
+
+## 一句话主题
+
+测试主题。
+
+## 内容总览
+
+完整覆盖视频内容。
+
+## 时间轴与内容地图
+
+| 时间 | 章节 | 内容 |
+| --- | --- | --- |
+| [00:00] | 开场 | 介绍主题 |
+
+## 分章节详细提炼
+
+### 00:00 开场
+
+{detailed_body}
+
+## 核心概念与术语
+
+- 核心概念：定义和适用范围。
+
+## 作者的假设、限制与可能争议
+
+- 本内容仅用于验证结构。
+
+## 复习问题
+
+1. 主题是什么？
+2. 主要论点是什么？
+3. 使用了什么例子？
+4. 有哪些限制？
+5. 如何实际应用？
+
+## 提炼质量说明
+
+已对照完整章节阅读稿复核，并通过结构校验。
+"""
+            note.write_text(body, encoding="utf-8")
+            result = run_script(
+                "validate_note.py",
+                str(note),
+                "--duration-seconds",
+                "600",
+                "--expected-chapters",
+                "1",
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

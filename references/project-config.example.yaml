@@ -1,0 +1,54 @@
+version: 1
+
+project:
+  name: "Video Learning Notes"
+  default_summary_language: "zh-CN"
+
+output:
+  type: "obsidian"
+  vault_root: "/absolute/path/to/your/ObsidianVault"
+  target_folder: "."
+  transcript_folder: "_transcripts"
+  attachments_folder: "_attachments/video-notes"
+  index_note: "Video Learning Index.md"
+
+defaults:
+  detail_level: "detailed-study"
+  quality_priority: "maximum"
+  preserve_timestamps: true
+  preserve_original_terms: true
+  generate_review_questions: true
+  review_question_count: "5-10"
+  inspect_visuals_when_material: true
+  transcript_priority:
+    - "manual-subtitles"
+    - "automatic-captions"
+    - "local-asr"
+  local_asr:
+    engine: "mlx-whisper"
+    model: "mlx-community/whisper-large-v3-turbo"
+
+retention:
+  keep_clean_transcript: false
+  keep_raw_subtitle: false
+  keep_audio: false
+  keep_full_video: false
+
+safety:
+  overwrite_existing_notes: false
+  bypass_access_controls: false
+
+performance:
+  use_single_pass_pipeline: true
+  keep_full_chapter_coverage: true
+  record_stage_timings: true
+  allow_smaller_asr_model: false
+  allow_skip_fact_check: false
+
+quality_gate:
+  mandatory: true
+  compare_against_full_chapterized_source: true
+  require_semantic_review: true
+  require_structural_validation: true
+  auto_revise_on_failure: true
+  require_final_readback: true

@@ -1,0 +1,27 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+.cache/
+.work/
+work/
+tmp/
+
+# Large intermediate media and transcription artifacts
+*.mp3
+*.m4a
+*.wav
+*.mp4
+*.webm
+whisper.json
+transcript.md
+chapterized.md
+timings.json
+
+# Local paths, credentials, and site cookies must never be published
+project-config.yaml
+cookies*.txt
+*.cookies

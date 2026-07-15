@@ -1,0 +1,4 @@
+interface:
+  display_name: "视频学习笔记"
+  short_description: "将 B 站和 YouTube 视频转化为详细的 Obsidian 学习笔记"
+  default_prompt: "Use $summarize-learning-videos to turn this video link into a detailed Chinese learning note and save it to my Obsidian vault."
