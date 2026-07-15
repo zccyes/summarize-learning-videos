@@ -22,6 +22,35 @@ def run_script(name: str, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_render_note_properties_appends_final_table_from_yaml(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            note = Path(directory) / "note.md"
+            note.write_text(
+                "---\n"
+                "type: video-note\n"
+                'title: "测试笔记"\n'
+                "platform: Bilibili\n"
+                "creator: 测试作者\n"
+                "source: https://example.com/video\n"
+                "duration: 00:10:00\n"
+                "source_quality: C\n"
+                "tags:\n"
+                "  - 视频笔记\n"
+                "  - 人工智能\n"
+                "---\n\n"
+                "# 测试笔记\n\n正文。\n",
+                encoding="utf-8",
+            )
+            result = run_script("render_note_properties.py", "--write", str(note))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result = run_script("render_note_properties.py", "--write", str(note))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            text = note.read_text(encoding="utf-8")
+            self.assertTrue(text.startswith("---\n"))
+            self.assertTrue(text.rstrip().endswith("| 标签 | #视频笔记 #人工智能 |"))
+            self.assertIn("| 原视频 | [打开原视频](https://example.com/video) |", text)
+            self.assertEqual(text.count("## 笔记属性"), 1)
+
     def test_render_search_buttons_are_logo_only_and_url_encoded(self) -> None:
         result = run_script(
             "render_search_buttons.py",
@@ -198,6 +227,23 @@ class WorkflowTests(unittest.TestCase):
 ## 提炼质量说明
 
 已对照完整章节阅读稿复核，并通过结构校验。
+
+## 笔记属性
+
+| 属性 | 内容 |
+|---|---|
+| 类型 | video-note |
+| 标题 | 测试笔记 |
+| 平台 | test |
+| 作者 | test |
+| 原视频 | [打开原视频](https://example.com/video) |
+| 视频 ID | test-1 |
+| 时长 | 00:10:00 |
+| 转写来源 | manual-subtitles |
+| 来源质量 | high |
+| 状态 | complete |
+| 笔记创建日期 | 2026-01-01 |
+| 标签 | #video-note |
 """
             note.write_text(body, encoding="utf-8")
             result = run_script(

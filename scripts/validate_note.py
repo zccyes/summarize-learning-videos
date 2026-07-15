@@ -23,6 +23,7 @@ REQUIRED_SECTIONS = (
     "## 复习问题",
     "## 知识图谱关键词",
     "## 提炼质量说明",
+    "## 笔记属性",
 )
 PLACEHOLDER = re.compile(
     r"TODO|待补充|待填写|<(?!/?(?:a|span|img)\b)[^>\n]{1,80}>",
@@ -67,6 +68,17 @@ def main() -> int:
     for section in REQUIRED_SECTIONS:
         if section not in body:
             errors.append(f"Missing required section: {section}")
+
+    level_two_sections = re.findall(r"(?m)^##\s+.+$", body)
+    if level_two_sections and level_two_sections[-1] != "## 笔记属性":
+        errors.append("Note properties must be the final level-two section")
+
+    property_section = body.split("## 笔记属性", 1)[-1] if "## 笔记属性" in body else ""
+    if "| 属性 | 内容 |" not in property_section:
+        errors.append("Final note-properties section must contain the generated property table")
+    for label in ("标题", "平台", "作者", "原视频", "时长", "来源质量", "标签"):
+        if not re.search(rf"(?m)^\|\s*{re.escape(label)}\s*\|", property_section):
+            errors.append(f"Final note-properties table is missing: {label}")
 
     placeholders = sorted(set(PLACEHOLDER.findall(text)))
     if placeholders:

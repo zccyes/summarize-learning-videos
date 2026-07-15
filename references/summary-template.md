@@ -95,6 +95,10 @@ tags:
 - 来源等级：<A/B/C/D and meaning>
 - 已核验项目：<coverage, terms, frames, timestamps>
 - 仍不确定内容：<none or concise list>
+
+## 笔记属性
+
+<Final human-readable property table generated from the opening YAML by scripts/render_note_properties.py. This must be the final level-two section.>
 ```
 
 ## Suggested detail level
@@ -118,3 +122,13 @@ scripts/render_search_buttons.py \
 ```
 
 The generated HTML must display only the Baidu and Google logos. Do not add visible provider names or raw URLs. Keep the `title` and `aria-label` attributes for hover help and accessibility. Search queries should combine the normalized term with enough Chinese or English context to avoid ambiguity.
+
+## Property placement
+
+Obsidian only recognizes YAML frontmatter when it remains at the beginning of the file. Keep that block for indexing, tags, aliases, and graph behavior. After the note passes content review, generate the visible property table at the end:
+
+```bash
+scripts/render_note_properties.py --write "/path/to/note.md"
+```
+
+The command replaces any existing `## 笔记属性` section and makes the regenerated table the final section. For a content-first reading experience, set Obsidian's **Properties in document** option to **Hidden**; do not remove or relocate the opening YAML.

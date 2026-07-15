@@ -47,6 +47,8 @@ Use this as a release gate. Mark each critical item pass or fail. Revise and rep
 - Never overwrite an existing note without permission.
 - Use relative attachment paths.
 - **Critical:** Do not use `[[wikilinks]]` for concept headings or graph keywords unless the target note already exists in the vault.
+- **Critical:** Keep valid YAML frontmatter at the file beginning so Obsidian can index properties, aliases, and tags.
+- **Critical:** Make `笔记属性` the final level-two section and generate its values from the opening YAML rather than maintaining an unrelated second metadata source.
 - **Critical:** Confirm the final file can be read back after writing.
 
 ## Revision loop
