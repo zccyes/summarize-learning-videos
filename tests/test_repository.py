@@ -55,6 +55,12 @@ class RepositoryTests(unittest.TestCase):
         self.assertEqual(keys, {"name", "description"})
         self.assertIn("name: summarize-learning-videos", frontmatter)
 
+    def test_slv_alias_is_a_frontmatter_trigger(self) -> None:
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        _, frontmatter, _ = skill.split("---", 2)
+        self.assertIn('standalone alias "SLV"', frontmatter)
+        self.assertIn("case", frontmatter.lower())
+
     def test_public_files_do_not_contain_personal_paths(self) -> None:
         forbidden = ("/Users/" + "zhangchen", "iCloud~md~" + "obsidian")
         suffixes = {".md", ".py", ".yaml", ".yml", ".sh"}

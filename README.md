@@ -294,6 +294,28 @@ python3 \
 
 ### 在 Codex 中使用
 
+#### 使用 `SLV` 快捷调用
+
+`SLV` 是 `summarize-learning-videos` 的正式调用别名，不区分字母大小写。只要在视频处理请求中写出独立的 `SLV`、`slv` 或 `Slv`，Codex 就应将其视为明确指定使用本 Skill。
+
+推荐的最简写法：
+
+```text
+用 SLV 深度整理并保存：
+https://www.bilibili.com/video/BVxxxxxxxxxx/
+```
+
+也可以写成：
+
+```text
+请用 SLV 帮我阅读这个视频并整理成学习笔记：
+https://www.youtube.com/watch?v=xxxxxxxxxxx
+```
+
+如果只写了 `SLV` 但没有提供视频链接或本地视频，Codex 应先请求补充视频来源，而不是改用其他总结流程。
+
+#### 使用完整 Skill 名称
+
 直接发送视频链接：
 
 ```text

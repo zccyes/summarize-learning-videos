@@ -1,11 +1,15 @@
 ---
 name: summarize-learning-videos
-description: Convert Bilibili, YouTube, and other accessible learning-video links into detailed, timestamped Chinese study notes and save them as Obsidian-compatible Markdown. Use when the user provides a video URL or local video and asks for a comprehensive summary, structured extraction, study notes, review material, transcript-backed analysis, or export to their Obsidian vault. Handle subtitles, local speech transcription, visual-heavy videos, metadata, source-quality disclosure, and note archiving.
+description: Convert Bilibili, YouTube, and other accessible learning-video links into detailed, timestamped Chinese study notes and save them as Obsidian-compatible Markdown. Always use this skill when the user includes the standalone alias "SLV" in any letter case (for example, SLV, slv, or Slv) to request work on a video; treat the alias as an explicit invocation of summarize-learning-videos. Also use when the user provides a video URL or local video and asks for a comprehensive summary, structured extraction, study notes, review material, transcript-backed analysis, or export to their Obsidian vault. Handle subtitles, local speech transcription, visual-heavy videos, metadata, source-quality disclosure, and note archiving.
 ---
 
 # Summarize Learning Videos
 
 Turn accessible videos into complete, traceable learning notes. Prefer source coverage and accuracy over speed. Do not present a page description or another person's summary as if it covered the full video.
+
+## Recognize the SLV alias
+
+Treat the standalone token `SLV`, case-insensitively, as an explicit request to use this skill. When the request includes `SLV` and a video URL or local video, run the complete workflow unless the user explicitly narrows the requested output. When `SLV` is present but no video source is provided, ask for the URL or local video instead of substituting another workflow.
 
 ## Load configuration
 
