@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,21 +58,44 @@ class WorkflowTests(unittest.TestCase):
             "render_search_buttons.py",
             "--term",
             "HBM4",
-            "--baidu-query",
-            "HBM4 高带宽内存",
-            "--google-query",
-            "HBM4 High Bandwidth Memory",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         markup = result.stdout.strip()
         self.assertIn("https://www.baidu.com/favicon.ico", markup)
         self.assertIn("https://www.google.com/favicon.ico", markup)
-        self.assertIn("HBM4%20%E9%AB%98%E5%B8%A6%E5%AE%BD%E5%86%85%E5%AD%98", markup)
-        self.assertIn("HBM4%20High%20Bandwidth%20Memory", markup)
+        hrefs = re.findall(r'href="([^"]+)"', markup)
+        self.assertEqual(parse_qs(urlparse(hrefs[0]).query)["wd"], ["HBM4"])
+        self.assertEqual(parse_qs(urlparse(hrefs[1]).query)["q"], ["HBM4"])
         self.assertIn('title="百度搜索：HBM4"', markup)
         self.assertIn('aria-label="Google搜索：HBM4"', markup)
         self.assertNotIn(">百度搜索<", markup)
         self.assertNotIn(">Google搜索<", markup)
+
+    def test_rewrite_search_buttons_uses_heading_concept_only(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            note = Path(directory) / "note.md"
+            old_buttons = (
+                '<span class="slv-search-buttons">'
+                '<a href="https://www.baidu.com/s?wd=%E6%B2%89%E6%B2%A1%E6%88%90%E6%9C%AC%20%E5%86%B3%E7%AD%96">'
+                '<img src="https://www.baidu.com/favicon.ico" alt=""></a>'
+                '<a href="https://www.google.com/search?q=sunk%20cost%20decision%20making">'
+                '<img src="https://www.google.com/favicon.ico" alt=""></a></span>'
+            )
+            note.write_text(
+                "## 核心概念与术语\n\n"
+                "### 沉没成本（Sunk Cost）\n\n"
+                f"{old_buttons}\n\n概念说明。\n\n"
+                "## 下一节\n",
+                encoding="utf-8",
+            )
+            result = run_script("render_search_buttons.py", "--rewrite-note", str(note))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Rewrote 1", result.stdout)
+            text = note.read_text(encoding="utf-8")
+            hrefs = re.findall(r'href="([^"]+)"', text)
+            self.assertEqual(parse_qs(urlparse(hrefs[0]).query)["wd"], ["沉没成本"])
+            self.assertEqual(parse_qs(urlparse(hrefs[1]).query)["q"], ["沉没成本"])
+            self.assertIn("## 下一节", text)
 
     def test_normalize_vtt_deduplicates_progressive_captions(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -153,10 +178,6 @@ class WorkflowTests(unittest.TestCase):
                 "render_search_buttons.py",
                 "--term",
                 "测试概念",
-                "--baidu-query",
-                "测试概念 中文",
-                "--google-query",
-                "test concept",
             )
             self.assertEqual(buttons.returncode, 0, buttons.stderr)
             properties = "\n".join(
@@ -255,6 +276,26 @@ class WorkflowTests(unittest.TestCase):
                 "1",
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+            text = note.read_text(encoding="utf-8")
+            note.write_text(
+                text.replace(
+                    "%E6%B5%8B%E8%AF%95%E6%A6%82%E5%BF%B5",
+                    "%E6%B5%8B%E8%AF%95%E6%A6%82%E5%BF%B5%20%E4%B8%AD%E6%96%87",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            result = run_script(
+                "validate_note.py",
+                str(note),
+                "--duration-seconds",
+                "600",
+                "--expected-chapters",
+                "1",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Baidu queries must exactly equal", result.stdout)
 
 
 if __name__ == "__main__":

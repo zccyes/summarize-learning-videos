@@ -35,7 +35,7 @@ Use this as a release gate. Mark each critical item pass or fail. Revise and rep
 - Convert genuine procedures into actionable steps.
 - Include limitations and disagreements when they affect application.
 - Write review questions that test understanding, not trivia.
-- **Critical:** Give every core-concept heading one logo-only Baidu button and one logo-only Google button, with correctly encoded term-specific queries.
+- **Critical:** Give every core-concept heading one logo-only Baidu button and one logo-only Google button. After URL decoding, both queries must exactly equal the visible concept name before any parenthetical translation, with no appended context, definitions, related topics, or translated keywords.
 - **Critical:** Keep provider names and raw search URLs out of visible prose; retain hover titles and accessibility labels in the HTML.
 - **Critical:** Use normalized graph-keyword tags instead of unresolved concept-note wikilinks.
 

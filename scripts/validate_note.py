@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 from pathlib import Path
+from urllib.parse import unquote
 
 
 REQUIRED_PROPERTIES = (
@@ -41,6 +43,11 @@ def minimum_chars(duration_seconds: int | None) -> int:
     if duration_seconds <= 90 * 60:
         return 5000
     return 6000
+
+
+def concept_name(heading: str) -> str:
+    text = re.sub(r"^###\s+", "", heading).strip().replace("`", "")
+    return " ".join(re.split(r"[（(]", text, maxsplit=1)[0].split())
 
 
 def main() -> int:
@@ -130,6 +137,20 @@ def main() -> int:
     if len(google_links) != concept_count or google_icons != concept_count:
         errors.append(
             f"Core concepts have {concept_count} headings but not exactly one Google logo button each"
+        )
+
+    expected_queries = [concept_name(heading) for heading in concept_headings]
+    decoded_baidu = [unquote(html.unescape(query)) for query in baidu_links]
+    decoded_google = [unquote(html.unescape(query)) for query in google_links]
+    if len(decoded_baidu) == concept_count and decoded_baidu != expected_queries:
+        errors.append(
+            "Baidu queries must exactly equal their visible concept names; "
+            "do not append explanatory keywords"
+        )
+    if len(decoded_google) == concept_count and decoded_google != expected_queries:
+        errors.append(
+            "Google queries must exactly equal their visible concept names; "
+            "do not append explanatory or translated keywords"
         )
     if concept_section.count('title="百度搜索：') != concept_count:
         errors.append("Every Baidu button must include a hover title")

@@ -115,13 +115,16 @@ Treat these as completeness guides, not quotas. Remove repetition while preservi
 Give each concept one heading and one button row. Generate the row with:
 
 ```bash
-scripts/render_search_buttons.py \
-  --term "HBM4" \
-  --baidu-query "HBM4 高带宽内存" \
-  --google-query "HBM4 High Bandwidth Memory"
+scripts/render_search_buttons.py --term "HBM4"
 ```
 
-The generated HTML must display only the Baidu and Google logos. Do not add visible provider names or raw URLs. Keep the `title` and `aria-label` attributes for hover help and accessibility. Search queries should combine the normalized term with enough Chinese or English context to avoid ambiguity.
+The generated HTML must display only the Baidu and Google logos. Do not add visible provider names or raw URLs. Keep the `title` and `aria-label` attributes for hover help and accessibility. Both providers must search the exact visible concept name before any parenthetical translation. Never append definitions, related topics, disambiguating words, translations, or other explanatory keywords. For example, the heading `沉没成本（Sunk Cost）` must search only `沉没成本` in both providers.
+
+To repair buttons in an existing note after upgrading the skill, run:
+
+```bash
+scripts/render_search_buttons.py --rewrite-note "/path/to/note.md"
+```
 
 ## Property placement
 
